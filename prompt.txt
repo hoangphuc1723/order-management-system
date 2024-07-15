@@ -1,3 +1,5 @@
+db.example.insertOne({ID: 1, Name: "P", Age: 22, Description: "Phuc"})
+
 Excercise:
 Xây dựng một hệ thống quản lý đơn hàng. Hệ thống này sẽ có các chức năng sau:
 
