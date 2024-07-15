@@ -1,0 +1,36 @@
+Excercise:
+Xây dựng một hệ thống quản lý đơn hàng. Hệ thống này sẽ có các chức năng sau:
+
+- Tạo đơn hàng mới.
+- Lấy danh sách tất cả các đơn hàng.
+
+- Lấy thông tin chi tiết của một đơn hàng.
+///////
+OrderID: Unique identifier for the order.
+CustomerID: Identifier of the customer who placed the order.
+OrderDate: Date and time when the order was placed.
+Status: Current status of the order (e.g., Pending, Shipped).
+TotalAmount: Final amount payable by the customer.
+
+Additional Essential Details (if needed):
+ShippingAddressID: Identifier for the shipping address.
+PaymentID: Identifier for the payment transaction
+///////
+- Xử lý đơn hàng (sử dụng goroutine để xử lý đơn hàng trong nền và channel để thông báo trạng thái).
+	(4 apis)
+
+Notes: Các techstacks có thể tham khảo:
+- struct
+- channel
+- goroutines
+- mutex lock/unlock
+- struct
+- interfaces
+- database (mySQL / Postgres / MongoDb)
+- gin (library dev API)
+
+Requirements:
+- Tạo một repo github để commit code lên hằng ngày bằng GIT
+- Một file README.md để hướng dẫn cách chạy service
+- Chạy service locally
+- Build Docker Image/ Deploy docker container thông qua docker-compose.yml
