@@ -1,10 +1,11 @@
 package main
 
 import (
-	"/internal/api"
 	"log"
 	"net/http"
 	"time"
+
+	"internal/api"
 
 	"github.com/gin-gonic/gin"
 )
