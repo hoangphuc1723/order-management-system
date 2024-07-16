@@ -1,4 +1,4 @@
-module github.com/hoangphuc1723/order-management-system
+module order-management-system
 
 go 1.18
 
