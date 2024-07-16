@@ -2,38 +2,53 @@
 package main
 
 import (
-    "database/sql"
-    "log"
-    "order-management/api/handler"
-    "order-management/repository"
-    "order-management/service"
-    "github.com/gin-gonic/gin"
-    _ "github.com/go-sql-driver/mysql"
+	"context"
+	"log"
+	"order-management-system/api/handler"
+	"order-management-system/repository"
+	"order-management-system/service"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func main() {
-    // Other initializations...
+	// Database connection
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
+	if err != nil {
+		log.Fatal(err)
+	}
 
-    // Start order processing
-    orderService.StartOrderProcessing()
-    
-    // Database connection
-    db, err := sql.Open("mysql", "user:password@tcp(localhost:3306)/orderdb")
-    if err != nil {
-        log.Fatal(err)
-    }
-    defer db.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-    // Initialize repositories and services
-    orderRepo := repository.NewOrderRepository(db)
-    orderService := service.NewOrderService(orderRepo)
+	err = client.Connect(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-    // Initialize Gin router
-    r := gin.Default()
+	db := client.Database("orderdb")
 
-    // Set up routes
-    handler.NewOrderHandler(r, orderService)
+	// Initialize repositories and services
+	orderRepo := repository.NewOrderRepository(db)
+	orderService := service.NewOrderService(orderRepo)
 
-    // Run the server
-    r.Run(":8080")
+	// Initialize Gin router
+	r := gin.Default()
+
+	// Set up routes
+	handler.NewOrderHandler(r, orderService)
+
+	// Run the server
+	r.Run(":8080")
+
+	// Other initializations...
+
+	// Start order processing
+	orderService.StartOrderProcessing()
+
+	// Other code...
+
 }

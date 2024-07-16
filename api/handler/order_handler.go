@@ -2,57 +2,64 @@
 package handler
 
 import (
-    "net/http"
-    "order-management/models"
-    "order-management/service"
-    "github.com/gin-gonic/gin"
+	"net/http"
+	"order-management-system/models"
+	"order-management-system/service"
+
+	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type OrderHandler struct {
-    Service *service.OrderService
+	Service *service.OrderService
 }
 
 func NewOrderHandler(router *gin.Engine, service *service.OrderService) {
-    handler := &OrderHandler{Service: service}
+	handler := &OrderHandler{Service: service}
 
-    router.POST("/orders", handler.CreateOrder)
-    router.GET("/orders", handler.GetAllOrders)
-    router.GET("/orders/:id", handler.GetOrderById)
+	router.POST("/orders", handler.CreateOrder)
+	router.GET("/orders", handler.GetAllOrders)
+	router.GET("/orders/:id", handler.GetOrderById)
 }
 
 func (h *OrderHandler) CreateOrder(c *gin.Context) {
-    var order models.Order
-    if err := c.ShouldBindJSON(&order); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-        return
-    }
+	var order models.Order
+	if err := c.ShouldBindJSON(&order); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-    if err := h.Service.CreateOrder(&order); err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-        return
-    }
+	order.OrderID = primitive.NewObjectID()
+	if err := h.Service.CreateOrder(&order); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-    c.JSON(http.StatusCreated, order)
+	c.JSON(http.StatusCreated, order)
 }
 
 func (h *OrderHandler) GetAllOrders(c *gin.Context) {
-    orders, err := h.Service.GetAllOrders()
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-        return
-    }
+	orders, err := h.Service.GetAllOrders()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-    c.JSON(http.StatusOK, orders)
+	c.JSON(http.StatusOK, orders)
 }
 
 func (h *OrderHandler) GetOrderById(c *gin.Context) {
-    orderID := c.Param("id")
+	orderID, err := primitive.ObjectIDFromHex(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid order ID"})
+		return
+	}
 
-    order, err := h.Service.GetOrderById(orderID)
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-        return
-    }
+	order, err := h.Service.GetOrderById(orderID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-    c.JSON(http.StatusOK, order)
+	c.JSON(http.StatusOK, order)
 }
