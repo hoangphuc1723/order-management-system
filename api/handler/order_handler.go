@@ -20,6 +20,7 @@ func NewOrderHandler(router *gin.Engine, service *service.OrderService) {
 	router.POST("/orders", handler.CreateOrder)
 	router.GET("/orders", handler.GetAllOrders)
 	router.GET("/orders/:id", handler.GetOrderById)
+	router.DELETE("/orders/:id", handler.DeleteOrder) // Add DELETE route
 }
 
 func (h *OrderHandler) CreateOrder(c *gin.Context) {
@@ -62,4 +63,20 @@ func (h *OrderHandler) GetOrderById(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, order)
+}
+
+func (h *OrderHandler) DeleteOrder(c *gin.Context) {
+	orderID, err := primitive.ObjectIDFromHex(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid order ID"})
+		return
+	}
+
+	err = h.Service.DeleteOrder(orderID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }

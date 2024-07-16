@@ -27,3 +27,7 @@ func (s *OrderService) GetAllOrders() ([]models.Order, error) {
 func (s *OrderService) GetOrderById(orderID primitive.ObjectID) (*models.Order, error) {
 	return s.Repo.GetOrderById(orderID)
 }
+
+func (s *OrderService) DeleteOrder(orderID primitive.ObjectID) error {
+	return s.Repo.DeleteOrder(orderID)
+}

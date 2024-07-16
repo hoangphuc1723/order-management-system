@@ -4,6 +4,7 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"order-management-system/api/handler"
 	"order-management-system/repository"
 	"order-management-system/service"
@@ -41,14 +42,22 @@ func main() {
 	// Set up routes
 	handler.NewOrderHandler(r, orderService)
 
+	r.Use(func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept")
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(http.StatusOK)
+		} else {
+			c.Next()
+		}
+	})
+
+	// Serve static files (HTML, CSS, JS, images, etc.) from the "web" directory
+	r.Static("/web", "./web")
+
 	// Run the server
 	r.Run(":8080")
 
 	// Other initializations...
-
-	// Start order processing
-	orderService.StartOrderProcessing()
-
-	// Other code...
-
 }

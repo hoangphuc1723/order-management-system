@@ -8,11 +8,11 @@ import (
 )
 
 type Order struct {
-	OrderID           primitive.ObjectID `bson:"_id,omitempty" json:"order_id"`
-	CustomerID        primitive.ObjectID `bson:"customer_id,omitempty" json:"customer_id"`
-	OrderDate         time.Time          `bson:"order_date" json:"order_date"`
+	OrderID           primitive.ObjectID `bson:"_id,omitempty" json:"orderId"`
+	CustomerID        string             `bson:"customerId,omitempty" json:"customerId"`
+	OrderDate         time.Time          `bson:"orderDate" json:"orderDate"`
 	Status            string             `bson:"status" json:"status"`
-	TotalAmount       float64            `bson:"total_amount" json:"total_amount"`
-	ShippingAddressID primitive.ObjectID `bson:"shipping_address_id,omitempty" json:"shipping_address_id"`
-	PaymentID         primitive.ObjectID `bson:"payment_id,omitempty" json:"payment_id"`
+	TotalAmount       float64            `bson:"totalAmount" json:"totalAmount"`
+	ShippingAddressID string             `bson:"shippingAddressId,omitempty" json:"shippingAddressId"`
+	PaymentID         string             `bson:"paymentId,omitempty" json:"paymentId"`
 }
