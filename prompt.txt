@@ -3,10 +3,11 @@ db.example.insertOne({ID: 1, Name: "P", Age: 22, Description: "Phuc"})
 Excercise:
 Xây dựng một hệ thống quản lý đơn hàng. Hệ thống này sẽ có các chức năng sau:
 
-- Tạo đơn hàng mới.
-- Lấy danh sách tất cả các đơn hàng.
+- Tạo đơn hàng mới. done
+- Lấy danh sách tất cả các đơn hàng. done
 
-- Lấy thông tin chi tiết của một đơn hàng.
+- Lấy thông tin chi tiết của một đơn hàng. done
+
 ///////
 OrderID: Unique identifier for the order.
 CustomerID: Identifier of the customer who placed the order.
@@ -18,8 +19,9 @@ Additional Essential Details (if needed):
 ShippingAddressID: Identifier for the shipping address.
 PaymentID: Identifier for the payment transaction
 ///////
-- Xử lý đơn hàng (sử dụng goroutine để xử lý đơn hàng trong nền và channel để thông báo trạng thái).
-	(4 apis)
+
+- Xử lý đơn hàng (sử dụng goroutine để xử lý đơn hàng trong nền và channel để thông báo trạng thái). ????
+	(4 apis) ????
 
 Notes: Các techstacks có thể tham khảo:
 - struct
@@ -36,3 +38,5 @@ Requirements:
 - Một file README.md để hướng dẫn cách chạy service
 - Chạy service locally
 - Build Docker Image/ Deploy docker container thông qua docker-compose.yml
+
+db.createUser({ user: "newuser", pwd: "password123", roles: [{ role: "readWrite", db: "orderdb" }]})

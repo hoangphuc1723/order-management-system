@@ -20,6 +20,10 @@ func NewOrderHandler(router *gin.Engine, service *service.OrderService) {
 	router.POST("/orders", handler.CreateOrder)
 	router.GET("/orders", handler.GetAllOrders)
 	router.GET("/orders/:id", handler.GetOrderById)
+	router.DELETE("/orders/:id", handler.DeleteOrder)
+	router.PUT("/orders/:id", handler.UpdateOrder) // Update order
+	router.PUT("/orders/:id/process", handler.ProcessOrder)
+
 }
 
 func (h *OrderHandler) CreateOrder(c *gin.Context) {
@@ -62,4 +66,69 @@ func (h *OrderHandler) GetOrderById(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, order)
+}
+
+func (h *OrderHandler) DeleteOrder(c *gin.Context) {
+	orderID, err := primitive.ObjectIDFromHex(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid order ID"})
+		return
+	}
+
+	err = h.Service.DeleteOrder(orderID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+func (h *OrderHandler) UpdateOrder(c *gin.Context) {
+	orderID, err := primitive.ObjectIDFromHex(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid order ID"})
+		return
+	}
+
+	var order models.Order
+	if err := c.ShouldBindJSON(&order); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	order.OrderID = orderID
+	if err := h.Service.UpdateOrder(order); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Order updated successfully"})
+}
+
+func (h *OrderHandler) ProcessOrder(c *gin.Context) {
+	orderID, err := primitive.ObjectIDFromHex(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid order ID"})
+		return
+	}
+
+	var order models.Order
+	if err := c.ShouldBindJSON(&order); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	order.OrderID = orderID
+	if err := h.Service.UpdateOrder(order); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	result := h.Service.ProcessOrder(c, orderID)
+
+	// Read the result from the channel
+	message := <-result
+
+	// Send a JSON response with the message
+	c.JSON(http.StatusOK, gin.H{"message": message})
 }
