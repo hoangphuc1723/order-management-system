@@ -30,11 +30,13 @@ func main() {
 		log.Fatal(err)
 	}
 
+	mqttService := service.NewMQTTService("tcp://broker.hivemq.com:1883", "orderManagementClient")
+
 	db := client.Database("orderdb")
 
 	// Initialize repositories and services
 	orderRepo := repository.NewOrderRepository(db)
-	orderService := service.NewOrderService(orderRepo)
+	orderService := service.NewOrderService(orderRepo, mqttService)
 
 	// Initialize Gin router
 	r := gin.Default()

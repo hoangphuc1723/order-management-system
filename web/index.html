@@ -111,7 +111,7 @@
                                 <button class="btn btn-sm btn-info" onclick="openEditModal('${order.orderId}')">Edit</button>
                                 <button class="btn btn-sm btn-danger" onclick="deleteOrder('${order.orderId}')">Delete</button>
                                 <button class="btn btn-sm btn-secondary" onclick="openViewModal('${order.orderId}')">View Details</button>
-                                <button class="btn btn-sm btn-warning" onclick="processOrder('${order.orderId}')">Process</button>
+                                <button class="btn btn-sm btn-warning process-order-btn" onclick="processOrder('${order.orderId}')">Process</button>
                             </td>
                         `;
                         orderTableBody.appendChild(row);
@@ -174,26 +174,28 @@
         }
 
         function processOrder(orderId) {
-            fetch(`/orders/${orderId}/process`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message); // Show a message to the user
-                fetchOrders(); // Refresh orders table to show updated status
-            })
-            .catch(error => console.error('Error processing order:', error));
+            fetch(`/orders/${orderId}/process`, { method: 'PUT' })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Order processed:', data);
+                    alert(data.message);
+                })
+                .catch(error => console.error('Error processing order:', error));
         }
+        
+        document.querySelectorAll('.process-order-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const orderId = button.dataset.orderId;
+                processOrder(orderId);
+            });
+        });
         
     </script>
 </head>
 <body>
     <div class="container mt-4">
         <!-- Banner for processing status -->
-        <div id="processingBanner" class="alert alert-info" style="display: none;">
+        <div id="processingStatus" class="alert alert-info" style="display: none;">
             <strong>Processing...</strong> Your request is being processed. Please wait.
         </div>
         <h1>Orders</h1>
@@ -331,43 +333,6 @@
             </div>
         </div>
     </div>
-
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-
-    <!-- Your custom JavaScript -->
-    <script>
-        function showProcessingBanner() {
-            document.getElementById('processingBanner').style.display = 'block';
-        }
-
-        function hideProcessingBanner() {
-            document.getElementById('processingBanner').style.display = 'none';
-        }
-
-        function processOrder(orderId) {
-            showProcessingBanner();
-
-            fetch(`/orders/${orderId}/process`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message); // Show a message to the user
-                fetchOrders(); // Refresh orders table to show updated status
-                hideProcessingBanner(); // Hide the processing banner
-            })
-            .catch(error => {
-                console.error('Error processing order:', error);
-                hideProcessingBanner(); // Hide the processing banner in case of error
-            });
-        }
-    </script>
-
     
 </body>
 </html>

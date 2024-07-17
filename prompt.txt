@@ -38,3 +38,5 @@ Requirements:
 - Một file README.md để hướng dẫn cách chạy service
 - Chạy service locally
 - Build Docker Image/ Deploy docker container thông qua docker-compose.yml
+
+db.createUser({ user: "newuser", pwd: "password123", roles: [{ role: "readWrite", db: "orderdb" }]})

@@ -22,7 +22,7 @@ func NewOrderHandler(router *gin.Engine, service *service.OrderService) {
 	router.GET("/orders/:id", handler.GetOrderById)
 	router.DELETE("/orders/:id", handler.DeleteOrder)
 	router.PUT("/orders/:id", handler.UpdateOrder) // Update order
-	router.PUT("/orders/:id/process", handler.ProcessOrderHandler)
+	router.PUT("/orders/:id/process", handler.ProcessOrder)
 
 }
 
@@ -105,15 +105,30 @@ func (h *OrderHandler) UpdateOrder(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Order updated successfully"})
 }
 
-func (h *OrderHandler) ProcessOrderHandler(c *gin.Context) {
-	orderIDStr := c.Param("id")
-	orderID, err := primitive.ObjectIDFromHex(orderIDStr)
+func (h *OrderHandler) ProcessOrder(c *gin.Context) {
+	orderID, err := primitive.ObjectIDFromHex(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid order ID"})
 		return
 	}
 
+	var order models.Order
+	if err := c.ShouldBindJSON(&order); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	order.OrderID = orderID
+	if err := h.Service.UpdateOrder(order); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	result := h.Service.ProcessOrder(c, orderID)
 
-	c.JSON(http.StatusOK, gin.H{"message": <-result})
+	// Read the result from the channel
+	message := <-result
+
+	// Send a JSON response with the message
+	c.JSON(http.StatusOK, gin.H{"message": message})
 }

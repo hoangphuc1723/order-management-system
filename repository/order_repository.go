@@ -70,11 +70,22 @@ func (r *OrderRepository) DeleteOrder(orderID primitive.ObjectID) error {
 	return err
 }
 
-// UpdateOrderStatus updates the status of an order
+func (r *OrderRepository) UpdateOrder(order models.Order) error {
+	collection := r.DB.Collection("orders")
+	filter := bson.M{"_id": order.OrderID}
+	update := bson.M{
+		"$set": order,
+	}
+	_, err := collection.UpdateOne(context.Background(), filter, update)
+	return err
+}
+
 func (r *OrderRepository) UpdateOrderStatus(ctx context.Context, orderID primitive.ObjectID, status string) error {
+	collection := r.DB.Collection("orders")
 	filter := bson.M{"_id": orderID}
 	update := bson.M{"$set": bson.M{"status": status}}
-	_, err := r.DB.Collection("orders").UpdateOne(ctx, filter, update)
+
+	_, err := collection.UpdateOne(ctx, filter, update)
 	return err
 }
 
@@ -158,14 +169,4 @@ func (r *OrderRepository) InitializeOrders() error {
 	}
 
 	return nil
-}
-
-func (r *OrderRepository) UpdateOrder(order models.Order) error {
-	collection := r.DB.Collection("orders")
-	filter := bson.M{"_id": order.OrderID}
-	update := bson.M{
-		"$set": order,
-	}
-	_, err := collection.UpdateOne(context.Background(), filter, update)
-	return err
 }
