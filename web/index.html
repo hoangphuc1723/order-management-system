@@ -11,7 +11,15 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-
+    <style>
+        #processingBanner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1050; /* Ensure it’s above other content */
+        }
+    </style>
     <!-- Your custom JavaScript -->
     <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -28,8 +36,10 @@
                     totalAmount: parseFloat(formData.get('totalAmount')),
                     shippingAddressId: formData.get('shippingAddressId'),
                     paymentId: formData.get('paymentId'),
-                    orderDate: new Date().toISOString() // Add orderDate here
+                    orderDate: new Date(formData.get('orderDate')).toISOString() // Add orderDate here
                 };
+                console.log(formData.get('orderDate'))
+                console.log(new Date(formData.get('orderDate')).toISOString())
         
                 fetch('http://localhost:8080/orders', {
                     method: 'POST',
@@ -45,6 +55,37 @@
                     createOrderForm.reset(); // Reset form fields
                 })
                 .catch(error => console.error('Error creating order:', error));
+            });
+
+            const editOrderForm = document.getElementById('editOrderForm');
+            editOrderForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                const formData = new FormData(editOrderForm);
+                const orderData = {
+                    customerId: formData.get('customerId'),
+                    status: formData.get('status'),
+                    totalAmount: parseFloat(formData.get('totalAmount')),
+                    shippingAddressId: formData.get('shippingAddressId'),
+                    paymentId: formData.get('paymentId')
+                };
+
+                const orderId = formData.get('orderId');
+
+                fetch(`/orders/${orderId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(orderData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    fetchOrders(); // Refresh orders table
+                    $('#editOrderModal').modal('hide'); // Hide modal after successful update
+                    editOrderForm.reset(); // Reset form fields
+                })
+                .catch(error => console.error('Error updating order:', error));
             });
         });
         
@@ -69,6 +110,8 @@
                             <td>
                                 <button class="btn btn-sm btn-info" onclick="openEditModal('${order.orderId}')">Edit</button>
                                 <button class="btn btn-sm btn-danger" onclick="deleteOrder('${order.orderId}')">Delete</button>
+                                <button class="btn btn-sm btn-secondary" onclick="openViewModal('${order.orderId}')">View Details</button>
+                                <button class="btn btn-sm btn-warning" onclick="processOrder('${order.orderId}')">Process</button>
                             </td>
                         `;
                         orderTableBody.appendChild(row);
@@ -82,9 +125,19 @@
         }
 
         function openEditModal(orderId) {
-            // Implement edit functionality if needed
-            console.log('Edit order:', orderId);
-        }
+            fetch(`/orders/${orderId}`)
+                .then(response => response.json())
+                .then(order => {
+                    document.getElementById('editOrderId').value = orderId;
+                    document.getElementById('editCustomerId').value = order.customerId;
+                    document.getElementById('editStatus').value = order.status;
+                    document.getElementById('editTotalAmount').value = order.totalAmount;
+                    document.getElementById('editShippingAddressId').value = order.shippingAddressId;
+                    document.getElementById('editPaymentId').value = order.paymentId;
+                    $('#editOrderModal').modal('show');
+                })
+                .catch(error => console.error('Error fetching order:', error));
+        }        
 
         function deleteOrder(orderId) {
             console.log(orderId)
@@ -102,10 +155,47 @@
                 .catch(error => console.error('Error deleting order:', error));
             }
         }
+
+        function openViewModal(orderId) {
+            fetch(`/orders/${orderId}`)
+                .then(response => response.json())
+                .then(order => {
+                    document.getElementById('viewOrderId').textContent = order.orderId;
+                    document.getElementById('viewCustomerId').textContent = order.customerId;
+                    document.getElementById('viewOrderDate').textContent = new Date(order.orderDate).toLocaleString();
+                    document.getElementById('viewStatus').textContent = order.status;
+                    document.getElementById('viewTotalAmount').textContent = order.totalAmount;
+                    document.getElementById('viewShippingAddressId').textContent = order.shippingAddressId;
+                    document.getElementById('viewPaymentId').textContent = order.paymentId;
+        
+                    $('#viewOrderModal').modal('show');
+                })
+                .catch(error => console.error('Error fetching order details:', error));
+        }
+
+        function processOrder(orderId) {
+            fetch(`/orders/${orderId}/process`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message); // Show a message to the user
+                fetchOrders(); // Refresh orders table to show updated status
+            })
+            .catch(error => console.error('Error processing order:', error));
+        }
+        
     </script>
 </head>
 <body>
     <div class="container mt-4">
+        <!-- Banner for processing status -->
+        <div id="processingBanner" class="alert alert-info" style="display: none;">
+            <strong>Processing...</strong> Your request is being processed. Please wait.
+        </div>
         <h1>Orders</h1>
         <table class="table">
             <thead>
@@ -115,8 +205,8 @@
                     <th>Order Date</th>
                     <th>Status</th>
                     <th>Total Amount</th>
-                    <th>Shipping Address ID</th>
-                    <th>Payment ID</th>
+                    <th>Shipping Address</th>
+                    <th>Payment</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -151,6 +241,10 @@
                             <input type="text" class="form-control" id="customerId" name="customerId" required>
                         </div>
                         <div class="form-group">
+                            <label for="createOrderDate">Order Date</label>
+                            <input type="date" class="form-control" id="createOrderDate" name="orderDate" required>
+                        </div>
+                        <div class="form-group">
                             <label for="status">Status</label>
                             <input type="text" class="form-control" id="status" name="status" required>
                         </div>
@@ -172,6 +266,107 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal for Edit Order -->
+    <div class="modal fade" id="editOrderModal" tabindex="-1" role="dialog" aria-labelledby="editOrderModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editOrderModalLabel">Edit Order</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Form for editing order -->
+                    <form id="editOrderForm">
+                        <input type="hidden" id="editOrderId" name="orderId">
+                        <div class="form-group">
+                            <label for="editCustomerId">Customer ID</label>
+                            <input type="text" class="form-control" id="editCustomerId" name="customerId" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editStatus">Status</label>
+                            <input type="text" class="form-control" id="editStatus" name="status" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editTotalAmount">Total Amount</label>
+                            <input type="number" class="form-control" id="editTotalAmount" name="totalAmount" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editShippingAddressId">Shipping Address ID</label>
+                            <input type="text" class="form-control" id="editShippingAddressId" name="shippingAddressId">
+                        </div>
+                        <div class="form-group">
+                            <label for="editPaymentId">Payment ID</label>
+                            <input type="text" class="form-control" id="editPaymentId" name="paymentId">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Viewing Order Details -->
+    <div class="modal fade" id="viewOrderModal" tabindex="-1" role="dialog" aria-labelledby="viewOrderModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewOrderModalLabel">Order Details</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Order ID:</strong> <span id="viewOrderId"></span></p>
+                    <p><strong>Customer ID:</strong> <span id="viewCustomerId"></span></p>
+                    <p><strong>Order Date:</strong> <span id="viewOrderDate"></span></p>
+                    <p><strong>Status:</strong> <span id="viewStatus"></span></p>
+                    <p><strong>Total Amount:</strong> <span id="viewTotalAmount"></span></p>
+                    <p><strong>Shipping Address ID:</strong> <span id="viewShippingAddressId"></span></p>
+                    <p><strong>Payment ID:</strong> <span id="viewPaymentId"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <!-- Your custom JavaScript -->
+    <script>
+        function showProcessingBanner() {
+            document.getElementById('processingBanner').style.display = 'block';
+        }
+
+        function hideProcessingBanner() {
+            document.getElementById('processingBanner').style.display = 'none';
+        }
+
+        function processOrder(orderId) {
+            showProcessingBanner();
+
+            fetch(`/orders/${orderId}/process`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message); // Show a message to the user
+                fetchOrders(); // Refresh orders table to show updated status
+                hideProcessingBanner(); // Hide the processing banner
+            })
+            .catch(error => {
+                console.error('Error processing order:', error);
+                hideProcessingBanner(); // Hide the processing banner in case of error
+            });
+        }
+    </script>
 
     
 </body>

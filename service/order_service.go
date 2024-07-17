@@ -2,8 +2,10 @@
 package service
 
 import (
+	"context"
 	"order-management-system/models"
 	"order-management-system/repository"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -30,4 +32,30 @@ func (s *OrderService) GetOrderById(orderID primitive.ObjectID) (*models.Order, 
 
 func (s *OrderService) DeleteOrder(orderID primitive.ObjectID) error {
 	return s.Repo.DeleteOrder(orderID)
+}
+
+func (s *OrderService) UpdateOrder(order models.Order) error {
+	return s.Repo.UpdateOrder(order)
+}
+
+func (s *OrderService) ProcessOrder(ctx context.Context, orderID primitive.ObjectID) <-chan string {
+	result := make(chan string)
+
+	go func() {
+		defer close(result)
+
+		// Simulate long-running task
+		time.Sleep(10 * time.Second)
+
+		// Update the order status to "Processed"
+		err := s.Repo.UpdateOrderStatus(ctx, orderID, "Processed")
+		if err != nil {
+			result <- "Error processing order: " + err.Error()
+			return
+		}
+
+		result <- "Order processed successfully"
+	}()
+
+	return result
 }
