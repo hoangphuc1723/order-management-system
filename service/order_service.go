@@ -3,8 +3,10 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"order-management-system/models"
 	"order-management-system/repository"
+	"sync"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -12,36 +14,57 @@ import (
 type OrderService struct {
 	Repo        *repository.OrderRepository
 	MQTTService *MQTTService
+	mu          sync.Mutex
 }
 
 func NewOrderService(repo *repository.OrderRepository, mqttService *MQTTService) *OrderService {
+	mqttService.Connect()
+	mqttService.Subscribe("orders/processed", 2, mqttService.OnMessageReceived)
+
 	return &OrderService{Repo: repo, MQTTService: mqttService}
 }
 
-func (s *OrderService) ProcessOrder(ctx context.Context, orderID primitive.ObjectID) chan string {
+func (s *OrderService) ProcessOrder(orderID primitive.ObjectID) chan string {
 	result := make(chan string)
 
 	go func() {
-		defer close(result)
-
-		// Update the order status in the database
-		err := s.Repo.UpdateOrderStatus(ctx, orderID, "Processed")
-		if err != nil {
-			result <- "Failed to process order"
-			return
-		}
+		defer func() {
+			fmt.Println("MQTT", s.MQTTService.LastMessage)
+			close(result)
+		}()
 
 		// Publish MQTT message
-		err = s.MQTTService.Publish("orders/processed", orderID.Hex())
-		if err != nil {
-			result <- "Failed to send MQTT message"
-			return
-		}
+		s.MQTTService.Publish("orders/processed", 2, false, orderID.Hex())
 
 		result <- "Order processed successfully"
 	}()
 
 	return result
+}
+
+func (s *OrderService) ListenForOrderUpdates(ctx context.Context) {
+	go func() {
+		for {
+			select {
+			case msg := <-s.MQTTService.MessageChan:
+				fmt.Printf("Received MQTT message: %s\n", msg)
+				orderID, err := primitive.ObjectIDFromHex(msg)
+				if err == nil {
+					// Update order status in the database
+					err := s.Repo.UpdateOrderStatus(orderID, "Processed")
+					if err != nil {
+						fmt.Printf("Failed to update order: %s\n", err)
+					} else {
+						fmt.Printf("Order %s updated successfully\n", orderID.Hex())
+					}
+				}
+			}
+		}
+	}()
+}
+
+func (s *OrderService) UpdateOrderStatus(orderID primitive.ObjectID, status string) error {
+	return s.Repo.UpdateOrderStatus(orderID, status)
 }
 
 func (s *OrderService) CreateOrder(order *models.Order) error {

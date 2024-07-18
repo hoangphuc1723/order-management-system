@@ -1,26 +1,38 @@
+version: '3.9'
+
 services:
   app:
     build: .
     ports:
-      - "8080:8080"
+      - 8080:8080
+    restart: always
     depends_on:
-      - mongodb
+      - database
     environment:
       - MONGO_URI=mongodb://mongo:27017/orderdb
 
-  mongodb:
-    image: mongo:latest
-    container_name: mongodb
+  database:
+    image: mongo
+    container_name: test-mongo
+    restart: always
     ports:
-      - "27017:27017"        # Maps port 27018 on the host to port 27017 on the container
+      - 27017:27017
+
+  mosquitto:
+    image: eclipse-mosquitto
+    container_name: mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+      - "9001:9001"
     volumes:
-      - mongodb-data:/data/db  # Persistent data storage
-      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js  # Initialization script (optional)
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root  # Optional: Root user for admin access
-      MONGO_INITDB_ROOT_PASSWORD: example  # Optional: Password for root user
-      MONGO_INITDB_DATABASE: mydatabase  # Optional: Default database to create
+      - ./mosquitto:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
 
 volumes:
-  mongodb-data:  # Defines a named volume for persistent data
+  mongo-data:
 
+networks:
+  default:
+    name: mqtt5-network

@@ -4,17 +4,17 @@ package repository
 import (
 	"context"
 	"order-management-system/models"
+	"sync"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-
-	"fmt"
 )
 
 type OrderRepository struct {
 	DB *mongo.Database
+	mu sync.Mutex
 }
 
 func NewOrderRepository(db *mongo.Database) *OrderRepository {
@@ -24,6 +24,9 @@ func NewOrderRepository(db *mongo.Database) *OrderRepository {
 }
 
 func (repo *OrderRepository) CreateOrder(order *models.Order) error {
+	repo.mu.Lock()
+	defer repo.mu.Unlock()
+
 	collection := repo.DB.Collection("orders")
 	order.OrderDate = time.Now()
 	_, err := collection.InsertOne(context.Background(), order)
@@ -31,6 +34,9 @@ func (repo *OrderRepository) CreateOrder(order *models.Order) error {
 }
 
 func (repo *OrderRepository) GetAllOrders() ([]models.Order, error) {
+	repo.mu.Lock()
+	defer repo.mu.Unlock()
+
 	collection := repo.DB.Collection("orders")
 	cursor, err := collection.Find(context.Background(), bson.M{})
 	if err != nil {
@@ -46,12 +52,15 @@ func (repo *OrderRepository) GetAllOrders() ([]models.Order, error) {
 		}
 		orders = append(orders, order)
 
-		fmt.Printf("Retrieved order: %+v\n", order)
+		// fmt.Printf("Retrieved order: %+v\n", order)
 	}
 	return orders, nil
 }
 
 func (repo *OrderRepository) GetOrderById(orderID primitive.ObjectID) (*models.Order, error) {
+	repo.mu.Lock()
+	defer repo.mu.Unlock()
+
 	collection := repo.DB.Collection("orders")
 	var order models.Order
 	err := collection.FindOne(context.Background(), bson.M{"_id": orderID}).Decode(&order)
@@ -62,6 +71,9 @@ func (repo *OrderRepository) GetOrderById(orderID primitive.ObjectID) (*models.O
 }
 
 func (r *OrderRepository) DeleteOrder(orderID primitive.ObjectID) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	collection := r.DB.Collection("orders")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -71,6 +83,9 @@ func (r *OrderRepository) DeleteOrder(orderID primitive.ObjectID) error {
 }
 
 func (r *OrderRepository) UpdateOrder(order models.Order) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	collection := r.DB.Collection("orders")
 	filter := bson.M{"_id": order.OrderID}
 	update := bson.M{
@@ -80,16 +95,22 @@ func (r *OrderRepository) UpdateOrder(order models.Order) error {
 	return err
 }
 
-func (r *OrderRepository) UpdateOrderStatus(ctx context.Context, orderID primitive.ObjectID, status string) error {
+func (r *OrderRepository) UpdateOrderStatus(orderID primitive.ObjectID, status string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	collection := r.DB.Collection("orders")
 	filter := bson.M{"_id": orderID}
 	update := bson.M{"$set": bson.M{"status": status}}
 
-	_, err := collection.UpdateOne(ctx, filter, update)
+	_, err := collection.UpdateOne(context.Background(), filter, update)
 	return err
 }
 
 func (r *OrderRepository) InitializeOrders() error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	collection := r.DB.Collection("orders")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

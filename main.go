@@ -10,6 +10,7 @@ import (
 	"order-management-system/service"
 	"time"
 
+	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -17,7 +18,9 @@ import (
 
 func main() {
 	// Database connection
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
+	ipaddress := "192.168.103.162"
+
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://" + ipaddress + ":27017"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -29,14 +32,23 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	mqttService := service.NewMQTTService("tcp://broker.hivemq.com:1883", "orderManagementClient")
-
+	//database init
 	db := client.Database("orderdb")
+
+	//mqtt client init
+	opts := MQTT.NewClientOptions()
+	opts.AddBroker("tcp://" + ipaddress + ":1883")
+	opts.SetClientID("go_mqtt_client")
+
+	// Create and start an MQTT client
+	mqttClient := MQTT.NewClient(opts)
+
+	mqttService := service.NewMQTTService(mqttClient)
 
 	// Initialize repositories and services
 	orderRepo := repository.NewOrderRepository(db)
 	orderService := service.NewOrderService(orderRepo, mqttService)
+	orderService.ListenForOrderUpdates(ctx)
 
 	// Initialize Gin router
 	r := gin.Default()
