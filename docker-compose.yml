@@ -1,18 +1,38 @@
-version: '3'
+version: '3.9'
+
 services:
-  web:
+  app:
     build: .
     ports:
-      - "8080:8080"
-    depends_on:
-      - db
-  db:
-    image: mysql:5.7
+      - 8080:8080
     restart: always
+    depends_on:
+      - database
     environment:
-      MYSQL_ROOT_PASSWORD: example
-      MYSQL_DATABASE: ordersdb
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
+      - MONGO_URI=mongodb://mongo:27017/orderdb
+
+  database:
+    image: mongo
+    container_name: test-mongo
+    restart: always
     ports:
-      - "3306:3306"
+      - 27017:27017
+
+  mosquitto:
+    image: eclipse-mosquitto
+    container_name: mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+
+volumes:
+  mongo-data:
+
+networks:
+  default:
+    name: mqtt5-network
