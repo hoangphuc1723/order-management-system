@@ -29,21 +29,21 @@ Clone the repository:
 git clone https://github.com/hoangphuc1723/order-management-system <br />
 cd order-management-system
 
-Build and start the containers:
-docker-compose up -d <br />
+Build and start the containers:  <br />
+docker compose up -d <br />
 This command will build the Docker image for the web application, if needed, and start all the services in the background.
 
 ## Access the web application:
 The web application will be accessible at http://localhost:8080/web.
 
 ## Stopping the Services
-To stop the running services, use the following command:
-
-docker-compose down <br />
+To stop the running services, use the following command:  <br />
+docker compose down <br />
 
 ## Logs and Data
 MongoDB data is stored in a Docker volume named mongo-data.
 Mosquitto data and logs are stored in the ./mosquitto/data and ./mosquitto/log directories, respectively.
+
 ## Troubleshooting
 If you encounter issues, you can check the logs of the individual services:
 
