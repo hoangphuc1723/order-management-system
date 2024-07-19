@@ -32,7 +32,6 @@ cd order-management-system
 - Build and start the containers:
 
 docker compose up -d <br />
-This command will build the Docker image for the web application, if needed, and start all the services in the background.
 
 ## Access the web application:
 The web application will be accessible at http://localhost:8080/web.
