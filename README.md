@@ -29,7 +29,8 @@ Follow these steps to set up and run the project:
 git clone https://github.com/hoangphuc1723/order-management-system <br />
 cd order-management-system
 
-- Build and start the containers:  <br />
+- Build and start the containers:
+
 docker compose up -d <br />
 This command will build the Docker image for the web application, if needed, and start all the services in the background.
 
