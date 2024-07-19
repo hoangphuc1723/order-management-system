@@ -41,16 +41,16 @@ To stop the running services, use the following command:
 
 docker-compose down <br />
 
-Logs and Data
+## Logs and Data
 MongoDB data is stored in a Docker volume named mongo-data.
 Mosquitto data and logs are stored in the ./mosquitto/data and ./mosquitto/log directories, respectively.
-Troubleshooting
+## Troubleshooting
 If you encounter issues, you can check the logs of the individual services:
 
-docker-compose logs order-management-system-app /n
-docker-compose logs mongo /n
+docker-compose logs order-management-system-app <br />
+docker-compose logs mongo <br />
 docker-compose logs mosquitto
 
-Additional Notes
+## Additional Notes
 Ensure the mosquitto directory and its subdirectories (data and log) have the appropriate permissions.
 You can customize the Mosquitto configuration by editing the mosquitto.conf file.
