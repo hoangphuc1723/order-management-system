@@ -26,7 +26,7 @@ Follow these steps to set up and run the project:
 
 Clone the repository:
 
-git clone [<repository-url>](https://github.com/hoangphuc1723/order-management-system) <br />
+git clone https://github.com/hoangphuc1723/order-management-system <br />
 cd order-management-system
 
 Build and start the containers:
